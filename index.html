@@ -1,0 +1,386 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 工具箱架构图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    color-scheme: light;
+    --bg: #f1f5f9;
+    --card-bg: #ffffff;
+    --fg: #0f172a;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --layer1: #e0f2fe;  /* 终端 - 浅蓝 */
+    --layer1-border: #38bdf8;
+    --layer1-text: #075985;
+    --layer2: #ede9fe;  /* Agent - 浅紫 */
+    --layer2-border: #a78bfa;
+    --layer2-text: #5b21b6;
+    --layer3: #dcfce7;  /* 基础设施 - 浅绿 */
+    --layer3-border: #4ade80;
+    --layer3-text: #166534;
+    --layer4: #fef3c7;  /* 模型 - 浅琥珀 */
+    --layer4-border: #fbbf24;
+    --layer4-text: #92400e;
+    --arrow: #94a3b8;
+    --badge: #ef4444;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 1060px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    padding: 36px 32px 28px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h1 small {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 8px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+  .arch {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+  .layer {
+    position: relative;
+    padding: 18px 20px;
+    border-radius: 12px;
+    margin-bottom: 0;
+  }
+  .layer-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .layer-label .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .layer-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .card {
+    border-radius: 10px;
+    padding: 14px 16px;
+    min-width: 180px;
+    flex: 1;
+    border: 1.5px solid transparent;
+    position: relative;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 12px;
+    line-height: 1.5;
+    opacity: 0.85;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+    color: #fff;
+  }
+  .badge-local { background: #22c55e; }
+  .badge-iphone { background: #6366f1; }
+
+  /* Layer backgrounds */
+  .layer-1 { background: var(--layer1); }
+  .layer-1 .layer-label { color: var(--layer1-text); }
+  .layer-1 .layer-label .num { background: var(--layer1-border); }
+  .layer-1 .card { background: #fff; border-color: var(--layer1-border); }
+  .layer-1 .card-title { color: var(--layer1-text); }
+
+  .layer-2 { background: var(--layer2); }
+  .layer-2 .layer-label { color: var(--layer2-text); }
+  .layer-2 .layer-label .num { background: var(--layer2-border); }
+  .layer-2 .card { background: #fff; border-color: var(--layer2-border); }
+  .layer-2 .card-title { color: var(--layer2-text); }
+
+  .layer-3 { background: var(--layer3); }
+  .layer-3 .layer-label { color: var(--layer3-text); }
+  .layer-3 .layer-label .num { background: var(--layer3-border); }
+  .layer-3 .card { background: #fff; border-color: var(--layer3-border); }
+  .layer-3 .card-title { color: var(--layer3-text); }
+
+  .layer-4 { background: var(--layer4); }
+  .layer-4 .layer-label { color: var(--layer4-text); }
+  .layer-4 .layer-label .num { background: var(--layer4-border); }
+  .layer-4 .card { background: #fff; border-color: var(--layer4-border); }
+  .layer-4 .card-title { color: var(--layer4-text); }
+
+  /* Arrows between layers */
+  .arrow-down {
+    display: flex;
+    justify-content: center;
+    padding: 2px 0;
+    color: var(--arrow);
+  }
+  .arrow-down svg {
+    width: 24px; height: 20px;
+  }
+
+  /* Right panel: data flow */
+  .flow-side {
+    margin-left: auto;
+    margin-top: 20px;
+    padding: 18px 20px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    max-width: 100%;
+  }
+  .flow-side h3 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .flow-step .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .flow-step .arrow-symbol {
+    color: var(--arrow);
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .flow-label { font-weight: 500; }
+  .flow-desc { color: var(--muted); font-size: 12px; }
+
+  .flow-side-2col {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .flow-side-2col > div { flex: 1; min-width: 200px; }
+
+  @media (max-width: 640px) {
+    .container { padding: 20px 14px; }
+    .card { min-width: 140px; }
+  }
+</style>
+<div class="container">
+  <h1>🧠 Leo's AI 工具箱架构图 <small>v2026.06.22</small></h1>
+  <div class="subtitle">从 AI 模型到终端设备的完整工具栈架构 · 四层分层结构 · 可扩展</div>
+
+  <div class="arch">
+
+    <!-- ===== Layer 1: 终端设备 ===== -->
+    <div class="layer layer-1">
+      <div class="layer-label"><span class="num">①</span> 终端设备 <span style="font-weight:400;font-size:11px;opacity:0.7">—— 用户交互入口</span></div>
+      <div class="layer-cards">
+        <div class="card">
+          <div class="card-title">📱 iPhone <span class="badge badge-iphone">主设备</span></div>
+          <div class="card-desc">
+            <strong>飞书</strong> — 与 OpenClaw / Codex 通讯桥接（消息通道）<br>
+            <strong>Telegram</strong> — 与 Grok Build / OpenClaw 通讯桥接<br>
+            <strong>Termius</strong> — 手机终端，经 Tailscale SSH 连接远程主机
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down">
+      <svg viewBox="0 0 24 20"><path d="M12 2v14M5 11l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <!-- ===== Layer 2: AI Agent 平台 ===== -->
+    <div class="layer layer-2">
+      <div class="layer-label"><span class="num">②</span> AI Agent 平台 <span style="font-weight:400;font-size:11px;opacity:0.7">—— 大脑 &amp; 编排层</span></div>
+      <div class="layer-cards">
+        <div class="card">
+          <div class="card-title">🛠️ Codex</div>
+          <div class="card-desc">AI 编码代理。接收飞书/Telegram 指令，自主编写/调试代码，管理项目文件，调用模型完成开发任务。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🤖 OpenClaw</div>
+          <div class="card-desc">全能 AI 数字秘书。知识查询、文件整理、邮件/日历管理、跨平台通讯、任务调度。核心入口。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Grok Build</div>
+          <div class="card-desc">快速原型 Agent。擅长从零到一的快速构建、创意实验、xAI 生态深度集成。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔮 Hermes</div>
+          <div class="card-desc">Agent 运行时环境。管理 Node.js 包、执行脚本、维护 Agent 运行状态及插件系统。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down">
+      <svg viewBox="0 0 24 20"><path d="M12 2v14M5 11l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <!-- ===== Layer 3: 基础设施 ===== -->
+    <div class="layer layer-3">
+      <div class="layer-label"><span class="num">③</span> 基础设施 <span style="font-weight:400;font-size:11px;opacity:0.7">—— 连通 &amp; 部署层</span></div>
+      <div class="layer-cards">
+        <div class="card">
+          <div class="card-title">🔁 CC Switch</div>
+          <div class="card-desc">API Key 鉴权代理。解决 Agent 平台对接模型时「有订阅账号、无官方 API Key」的问题。相当于智能路由 + 认证转换。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔗 Tailscale</div>
+          <div class="card-desc">WireGuard 组网。设备间无公网 IP 也能直连，打通 Mac、Windows、iPhone 的安全隧道，Termius SSH 依赖它。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🐙 GitHub</div>
+          <div class="card-desc">代码仓库。Agent 生成的代码自动推送至远程 repo，实现版本管理、异地访问、第三方协作/调用。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">☁️ Railway</div>
+          <div class="card-desc">云部署平台。提供虚拟服务器（云端 VPS），用于部署/运行服务端项目，一键发布。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down">
+      <svg viewBox="0 0 24 20"><path d="M12 2v14M5 11l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <!-- ===== Layer 4: AI 大模型 ===== -->
+    <div class="layer layer-4">
+      <div class="layer-label"><span class="num">④</span> AI 大模型 <span style="font-weight:400;font-size:11px;opacity:0.7">—— 算力 &amp; 推理层</span></div>
+      <div class="layer-cards">
+        <div class="card">
+          <div class="card-title">💬 ChatGPT <span style="font-weight:400;font-size:11px;color:var(--muted)">· OpenAI</span></div>
+          <div class="card-desc">通用旗舰模型。文本推理、代码、多模态（视觉/语音）。通过订阅账号 + CC Switch 代理接入。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🧪 Gemini <span style="font-weight:400;font-size:11px;color:var(--muted)">· Google</span></div>
+          <div class="card-desc">多模态大模型。长上下文、原生多模态处理。通过 Google AI API / 订阅代理接入。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🌌 Grok <span style="font-weight:400;font-size:11px;color:var(--muted)">· xAI</span></div>
+          <div class="card-desc">实时推理模型。深度集成 X/Twitter 数据，快速推理。通过订阅账号 + CC Switch 代理接入。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🐋 DeepSeek <span style="font-weight:400;font-size:11px;color:var(--muted)">· 深度求索</span></div>
+          <div class="card-desc">中文优化模型。高性价比推理、代码能力出色、上下文支持大。通过 API / 代理接入。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📦 Ollama <span class="badge badge-local">本地</span></div>
+          <div class="card-desc">本地模型部署平台。在本地 Mac 上运行开源模型（Llama、Qwen、Mistral 等），无需联网、离线可用。</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Data Flow -->
+  <div class="flow-side" style="margin-top:28px;">
+    <h3>📡 数据流全景</h3>
+    <div class="flow-side-2col">
+      <div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <span class="dot" style="background:var(--layer1-border)"></span>
+            <span class="flow-label">① 用户</span>
+            <span class="arrow-symbol">▸</span>
+            <span class="flow-desc">iPhone（飞书/Telegram/Termius）发指令</span>
+          </div>
+          <div class="flow-step">
+            <span class="dot" style="background:var(--layer2-border)"></span>
+            <span class="flow-label">② Agent 平台</span>
+            <span class="arrow-symbol">▸</span>
+            <span class="flow-desc">OpenClaw/Codex/Grok Build 解析任务</span>
+          </div>
+          <div class="flow-step">
+            <span class="dot" style="background:var(--layer3-border)"></span>
+            <span class="flow-label">③ 鉴权代理</span>
+            <span class="arrow-symbol">▸</span>
+            <span class="flow-desc">CC Switch 转换订阅 → API Key</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <span class="dot" style="background:var(--layer4-border)"></span>
+            <span class="flow-label">④ 模型推理</span>
+            <span class="arrow-symbol">▸</span>
+            <span class="flow-desc">ChatGPT/Gemini/Grok/DeepSeek/Ollama</span>
+          </div>
+          <div class="flow-step">
+            <span class="dot" style="background:var(--layer3-border)"></span>
+            <span class="flow-label">⑤ 成果落地</span>
+            <span class="arrow-symbol">▸</span>
+            <span class="flow-desc">GitHub 存代码 / Railway 部署服务</span>
+          </div>
+          <div class="flow-step">
+            <span class="dot" style="background:#6366f1"></span>
+            <span class="flow-label">⑥ 返回用户</span>
+            <span class="arrow-symbol">▸</span>
+            <span class="flow-desc">结果推送到飞书/Telegram</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--muted);">
+    <span>📋 生成工具：OpenClaw · Jenny</span>
+    <span>可扩展 · 后续可增加新工具至对应层级</span>
+  </div>
+</div>
